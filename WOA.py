@@ -35,7 +35,7 @@ def fitness(sset, nofeat, noclus):
 def woa(feat_set, nofeat, noclus, seval):
     
     ''' 
-        feat_set contains nofeat values for each cluster. Each value defines range of ith feature in its cluster.
+        feat_set contains datatype of each feature.
         noclus = no of clusters.
         nofeat = no of features in a each cluster.
         seval = start and end values of features for partucular cluster.
@@ -50,14 +50,13 @@ def woa(feat_set, nofeat, noclus, seval):
     noposs = 50 # no. of possible solutions
     poss_sols = np.zeroes((noposs, noclus), dtype=fdtype) # whale positions
     pbest = np.zeroes((noposs, noclus), dtype=fdtype) # each whale's best positions
-    pfit = np.zeroes(noposs, dtype=float) # each whale's fitness values
     gbest = np.zeroes(noclus, dtype=fdtype) # globally best wahle postitions
     b = 2
 
     for i in range(noposs):
         for j in range(noclus):
             for k in range(nofeat):
-                poss_sols[i][j][k] = np.random.randint(seval[j][0], high=seval[j][1]+1, dtype=feat_set[k].dtype.name)
+                poss_sols[i][j][k] = np.random.randint(seval[j][0][k], high=seval[j][1][k]+1, dtype=feat_set[k].dtype.name)
 
     global_fitness = fitness(gbest)
 
@@ -69,16 +68,18 @@ def woa(feat_set, nofeat, noclus, seval):
 
     for it in range(max_iterations):
     	for i in range(noposs):
+
     		a = 2 - 2*it/max_iterations
     		r = np.random.random_sample()
     		A = 2*a*r - a
     		C = 2*r
-    		l = np.random.random_sample()
+    		l = 2.0 * np.random.random_sample() - 1.0
     		p = np.random.random_sample()
+
 			for j in range(noclus):
 				for k in range(nofeat):
-					ub = seval[j][k][1]
-					lb = seval[j][k][0]
+					ub = seval[j][1][k]
+					lb = seval[j][0][k]
 					x = poss_sols[i][j][k]
 					
 					if p < 0.5:
@@ -105,4 +106,3 @@ def woa(feat_set, nofeat, noclus, seval):
 			if fitnessi < global_fitness :
 				global_fitness = fitnessi
 				gbest = poss_sols[i] 
-	

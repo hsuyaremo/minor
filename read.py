@@ -1,37 +1,34 @@
 from matplotlib import pyplot
 import dicom
-import cv2
-import numpy 
+import os
+import pso
+import WOA
+import numpy as np 
 
-D = dicom.read_file("D:\\data\\cancer\\TCGA-02-0003\\1.3.6.1.4.1.14519.5.2.1.1706.4001.145725991542758792340793681239\\1.3.6.1.4.1.14519.5.2.1.1706.4001.273700949846991110226831783061\\000058.dcm")
+training_data = "D:\\trainingdata\\"
+images = [name for name in os.listdir(training_data)]
 
-array = numpy.zeros((D.Rows,D.Columns), dtype=D.pixel_array.dtype)
-array = D.pixel_array
+def feature_extraction(image):
+	fdtype = "float64"
+	dpoint = np.zeroes((128*128), dtype = fdtype)
+	for i in range(128):
+		for j in range(128):
+			roi = image[i*4:(i+1)*4 - 1][i*4:(i+1)*4 - 1]
+			mean = 0
+			for x in roi.flatten():
+				mean +=x;
+			mean /= 16;
+			dpoint[i*128 + j][0] = mean;
+	return dpoint
 
-x = numpy.arange(0.0, 256*D.PixelSpacing[0], D.PixelSpacing[0])
-y = numpy.arange(0.0, 256*D.PixelSpacing[1], D.PixelSpacing[1])
-
-"""
-pyplot.figure(dpi=300)
-pyplot.axes().set_aspect('equal', 'datalim')
-pyplot.set_cmap(pyplot.gray())
-pyplot.pcolormesh(x, y, numpy.flipud(array[:, :]))
-"""
-fil = open("array.txt","w")
-print D.pixel_array.dtype
-
-#cv2.imshow('image' ,D.pixel_array )
-
-
-
-I = cv2.imread('prism.png',cv2.IMREAD_GRAYSCALE)
-I8 = numpy.uint8((array+1)/2 *255)
-
-print D
-
-cv2.imshow('image',I8)
-
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
+for name in images:
+	d = dicom.read_file(training_data + name)
+	piarr = d.pixel_array
+	features = feature_extraction(piarr)
+	noclus = 5
+	nofeat = 1
+	seval = np.zeroes((noclus,2), dtype = "float64")
+	feat_set = ["float64"]
+	seval[0][0] = 100 
+	seval[0][1] = 150
+	gbest, cluselem = pso.pso(feat_set,nofeat,noclus,seval)

@@ -36,7 +36,7 @@ def fitness(sset, nofeat, noclus):
 def pso(feat_set, nofeat, noclus, seval):
     
     ''' 
-        feat_set contains nofeat values for each cluster. Each value defines range of ith feature in its cluster.
+        feat_set contains datatype of each feature.
         noclus = no of clusters.
         nofeat = no of features in a each cluster.
         seval = start and end values of features for partucular cluster.
