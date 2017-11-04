@@ -1,84 +1,84 @@
 import numpy as np
+import sys
 
-#dpoints = image data points with feature values.
-
-def fitness(sset, nofeat, noclus):
-    clussize = np.zeroes(noclus)
-    cluselem = np.zeroes((noclus,dpoints.shape[0]))
-    cluselem = -1
+def fitness(sset, nofeat, noclus, dpoints, tr=1,):
+    clussize = np.zeros(noclus, dtype=int)
+    cluselem = np.zeros((noclus,dpoints.shape[0]), dtype=int)
 
     for i in range(dpoints.shape[0]):
-        minval = ()
+        minval = sys.maxint
         clusindex = -1
         for j in range(noclus):
-            val = 0 
+            val = 0.0
             for k in range(nofeat):
-                val += (dpoints[k] - sset[j][k]) ** 2
+                val += (dpoints[i][k] - sset[j][k]) ** 2.0
             if val < minval :
                 minval = val
                 clusindex = j
-        cluselem[clusindex][clussize[clusindex]++] = i
+        cluselem[clusindex][clussize[clusindex]] = i
+        clussize[clusindex] += 1;
 
     fitness = 0 
 
     for i in range(noclus):
         cluscenter = sset[i]
-        for j in clussize[i]:
-            val = 0
-            dpoint = dpoints[j]
+        val = 0.0
+        for j in range(clussize[i]):
+            dpoint = dpoints[cluselem[i][j]]
             for k in range(nofeat):
-                val += (dpoint[k] - cluscenter[k]) ** 2
+                val += (dpoint[k] - cluscenter[k]) ** 2.0
         val = val ** 0.5
-        val /= clussize[i]
+        if clussize[i] > 0:
+            val /= clussize[i]
         fitness += val
-    return fitness
+    
+    if tr :
+        return fitness
+    else :
+        return fitness, cluselem, clussize
 
-def pso(feat_set, nofeat, noclus, seval):
+def pso(nofeat, noclus, seval, dpoints):
     
     ''' 
-        feat_set contains datatype of each feature.
         noclus = no of clusters.
         nofeat = no of features in a each cluster.
         seval = start and end values of features for partucular cluster.
     '''
-
-    fdtype = ''
-    for i in range(nofeat) :
-        fdtype += feat_set[i].dtype.name + ','
-    fdtype = fdtype[:len(fdtype)-1]
-
-    max_iterations = 50
-    noposs = 50 # no. of possible solutions
-    poss_sols = np.zeroes((noposs, noclus), dtype=fdtype) # particles position
-    pbest = np.zeroes((noposs, noclus), dtype=fdtype) # each particle's best position
-    pfit = np.zeroes(noposs, dtype=float) # each particle's best fitness value
-    gbest = np.zeroes(noclus, dtype=fdtype) # globally best particle postition
-    parvel = np.zeroes((noposs, noclus), dtype=fdtype) # particle velocity
+    randomcount = 0
+    max_iterations = 10
+    noposs = 5 # no. of possible solutions
+    poss_sols = np.zeros((noposs, noclus, nofeat),) # particles position
+    pbest = np.zeros((noposs, noclus, nofeat),) # each particle's best position
+    pfit = np.zeros(noposs,) # each particle's best fitness value
+    gbest = np.zeros((noclus, nofeat),) # globally best particle postition
+    parvel = np.zeros((noposs, noclus,nofeat),) # particle velocity
     c2 = 2 # social constant
     c1 = 1 # cognitive constant
     w = .4 # inertia  
+    global_fitness = sys.maxint
 
+    for i in range(noposs):
+        pfit[i] = sys.maxint
+        
     for i in range(noposs):
         for j in range(noclus):
             for k in range(nofeat):
-                poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1, dtype=feat_set[k].dtype.name)
-                parvel[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1, dtype=feat_set[k].dtype.name)
+                poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
+        print "random generated",poss_sols[i]
 
     for it in range(max_iterations):
         for i in range(noposs):
-            cur_par_fitness = fitness(poss_sols[i])
-            best_fitness = fitness(pbest[i]);
+            cur_par_fitness = fitness(poss_sols[i], nofeat, noclus, dpoints)
+            best_fitness = pfit[i]
             if cur_par_fitness < best_fitness:
-                pfit[i] = best_fitness
+                pfit[i] = cur_par_fitness
                 pbest[i] = poss_sols[i]
-
-        global_fitness = fitness(gbest)
-        
+     
         for i in range(noposs):
             if pfit[i] < global_fitness:
                 global_fitness = pfit[i]
-                gbest = pfit[i]
-        
+                gbest = poss_sols[i]
+
         for i in range(noposs):
             for j in range(noclus):
             
@@ -87,8 +87,8 @@ def pso(feat_set, nofeat, noclus, seval):
 
                 for k in range(nofeat):
                     
-                    lb = seval[j][k][0]  
-                    ub = seval[j][k][1] 
+                    lb = 0
+                    ub = 260
                     
                     inertial_vel = w * parvel[i][j][k] # inertia weight
                     cog_vel = r1 * c1 * (pbest[i][j][k] - poss_sols[i][j][k]) # cognitive factor
@@ -96,17 +96,21 @@ def pso(feat_set, nofeat, noclus, seval):
 
                     vel = inertial_vel + cog_vel + soc_vel #update in vel
 
-                    if vel < lb || vel > ub:
-                        vel = np.random.randint(lb,high = ub+1,dtype = feat_set[k].dtype.name)
+                    if vel < lb or vel > ub:
+                        vel = np.random.randint(lb,high = ub+1)
+                        randomcount += 1
 
-                    perval[i][j][k] = vel
+                    parvel[i][j][k] = vel
                     position = poss_sols[i][j][k] + vel 
 
-                    if position < lb || position > ub:
-                        position = np.random.randint(lb,high = ub+1,dtype = feat_set[k].dtype.name)
+                    if position < lb or position > ub:
+                        position = np.random.randint(lb,high = ub+1)
                     
                     poss_sols[i][j][k] = position #update in position
 
-
-
+    print randomcount
+    
+    
+    fitnessi, cluselem, clussize = fitness(gbest, nofeat, noclus, dpoints, tr=0)
+    return gbest, cluselem, clussize
         
