@@ -4,8 +4,6 @@ import numpy as np
 import os
 import dicom
 
-enhanced = "D:\\enhanced\\"
-
 def valid(x, y, rs, cs, thresh):
 	if 0 <= x and x <= rs-1 and 0 <= y and y <= cs-1 and thresh[x][y] == 255:
 		return 1
@@ -51,7 +49,7 @@ def skstr(img):
 	tf = np.mean(roi)
 	ls = [l,r,u,d]
 
-	t,thresh = cv2.threshold(mf,tf*51.0/50.0,255,0)
+	t,thresh = cv2.threshold(mf,(ti+tf)/2.0,255,0)
 
 	kernel = np.ones((13,13),dtype = np.uint8)
 	opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
@@ -102,45 +100,6 @@ def skstr(img):
 	im_floodfill_inv = cv2.bitwise_not(im_floodfill)
  	im_out = im_th | im_floodfill_inv
 
- # 	dilation = cv2.dilate(im_out,kernel,iterations = 1)
-
- # 	l = rows
-	# r = 0
-	# u = rows
-	# d = 0
-	# ti = 0
- # 	for i in range(rows):
-	# 	for j in range(cols):
-	# 		if ti < im_out[i][j]:
-	# 			break
-	# 	if j != cols:
-	# 		l = min(l,j)
-
-	# 	for j in range(rows-1,0,-1):
-	# 		if ti < im_out[i][j]:
-	# 			break
-	# 	if j != rows:
-	# 		r = max(r,j)
-
-	# 	for j in range(rows):
-	# 		if ti < im_out[j][i]:
-	# 			break
-	# 	if j != rows:
-	# 		u = min(u,j)
-
-	# 	for j in range(rows-1,0,-1):
-	# 		if ti < im_out[j][i]:
-	# 			break
-	# 	if j != rows:
-	# 		d = max(d,j)
-	# print l,r,u,d
- # 	winw = (r-l)/4
- # 	win = mf[d-winw:d,(l+r)/2 - winw/2 : (l+r)/2 + winw/2]
- # 	for i in range(0,d-u-winw,winw):
- # 		mf[u+i:u+winw+i,(l+r)/2 - winw/2 : (l+r)/2 + winw/2] = int(np.mean(win))
- # 	cv2.imshow('img',mf)
- # 	cv2.waitKey(0)
- # 	cv2.destroyAllWindows()
  	return im_out,mf,ls
 
 def enhance_image(image, name, imgcnt):
@@ -176,8 +135,6 @@ def enhnontumour():
 			enhance_image(piarr, name ,imgcnt)
 			imgcnt += 1
 			print "saved.",imgcnt
-
-#enh()
 
 
 

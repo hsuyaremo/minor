@@ -9,84 +9,88 @@ import feature
 import enhance
 import cPickle
 
-noclus = 4 #no of clusters
 nofeat = 1 #no of features in each cluster
-d = 2 #patch size 
 
-def saveimg(clussize, cluselem, nm, it ):
-	seg_imag = np.zeros((r,r),dtype = np.uint8)
-	col = [50,125,200,255]
-	
-	for i in range(noclus):
-		for j in range(clussize[i]):
-			ii, jj = lst[cluselem[i][j]]
-			seg_imag[ii*d:(ii+1)*d,jj*d:(jj+1)*d] = col[i]
-
-	plt.imsave(testing+nm+str(it)+".jpg",seg_imag)
-
-def getclus(images):
+def getclus(images, noclus):
 	for it,name in enumerate(images):
 		piarr = cv2.imread(enhanced + name ,0)
-		mask ,piarr, ls = enhance.skstr(piarr)
+		mask ,piarr = enhance.skstr(piarr)
 		
 		r = piarr.shape[0]
+		ground = [27.5,72.5,110,142.5]
+		col = [63,127,191,255]
 
-		print "Processing image",name,"..."
-		total_features = np.zeros((r/d*r/d,nofeat))
-		for i in range(r/d):
-			for j in range(r/d):
-				roi = piarr[i*d:(i+1)*d,j*d:(j+1)*d]
-				idx = i*r/d + j
-				total_features[idx][0] = np.mean(roi)
-		print "processing done."
-		
 		lst = []
-		for i in range(r/d):
-			for j in range(r/d):
-				flag = 0
-				maskroi = mask[i*d:(i+1)*d,j*d:(j+1)*d]
-				for ii in range(d*d):
-					if maskroi.flatten()[ii] == 255:
-						flag =1
-						break
-				if flag == 1:
-					maskroi[:] = 255
+		for i in range(r):
+			for j in range(r):
+				if mask[i][j] == 255:
 					lst.append((i,j))
-				mask[i*d:(i+1)*d,j*d:(j+1)*d] = maskroi
-		
-		seval = np.zeros((noclus, nofeat, 2))
-		for i in range(noclus):
-			for j in range(nofeat):
-				seval[i][j][0] = 0
-				seval[i][j][1] = 255
 
-		features = np.zeros((len(lst),nofeat))
+		masked_image = np.zeros((len(lst),nofeat))
 		for ii in range(len(lst)):
 			i, j = lst[ii]
-			features [ii] = total_features[i*r/d +j]
+			masked_image[ii] = piarr[i*r +j]
 
 		print "clustering..with pso"
-		gbest, cluselem , clussize = pso.pso(nofeat,noclus,seval,features)
+		gbest, cluselem , clussize = pso.pso(nofeat,noclus,masked_image)
 		print "done with clustering."
 
 		print "data points are:"
 		for i,j in enumerate(clussize):
 			print "cluster",i,"contains",j,"elements"
-		print "global best=",gbest
+		print "global best \n",gbest
 
-		saveimg(clussize, cluselem, "pso", it)
+		setc = [0,0,0,0]
+		for i in range(noclus):
+			val = 256
+			for j in range(noclus):
+				if abs(gbest[i] - ground[j]) < val:
+					val = abs(gbest[i] - ground[j])
+					setc[i] = col[j]
+
+		seg_imag = np.zeros((r,r),dtype = np.uint8)
+		
+		for i in range(noclus):
+			for j in range(clussize[i]):
+				ii, jj = lst[cluselem[i][j]]
+				seg_imag[ii,jj] = setc[i]
+
+		plt.imsave(testing+str(it)+"p.jpg",seg_imag,cmap = "gray")
+		features = feature.feature_extraction(seg_imag)
+		if it == 0:
+			psofeatures = features
+		else:
+			psofeatures = np.append(psofeatures, features, axis =0 )
 
 		print "clustering..with woa"
-		gbest, cluselem , clussize = WOA.woa(nofeat,noclus,seval,features)
+		gbest, cluselem , clussize = WOA.woa(nofeat,noclus,seval,masked_image)
 		print "done with clustering."
 
 		print "data points are:"
 		for i,j in enumerate(clussize):
 			print "cluster",i,"contains",j,"elements"
-		print "global best=",gbest
+		print "global best \n",gbest
 
-		saveimg(clussize, cluselem, "woa", it)
+		for i in range(noclus):
+			val = 256
+			for j in range(noclus):
+				if abs(gbest[i] - ground[j]) < val:
+					val = abs(gbest[i] - ground[j])
+					setc[i] = col[j]
 
+		seg_imag = np.zeros((r,r),dtype = np.uint8)
+		
+		for i in range(noclus):
+			for j in range(clussize[i]):
+				ii, jj = lst[cluselem[i][j]]
+				seg_imag[ii,jj] = setc[i]
+
+		plt.imsave(testing+str(it)+"w.jpg",seg_imag,cmap ="gray")
+		features = feature.feature_extraction(seg_imag)
+		if it == 0:
+			woafeatures = features
+		else :
+			woafeatures = np.append(woafeatures, features, axis =0 )
 
 	return woafeatures,psofeatures
 
@@ -97,20 +101,32 @@ enhancednontumour = "D:\\images\\"
 #enhance.enhnontumour()
 
 images = [image for image in os.listdir(enhancedtumour)]
-woa ,pso = getclus(images)
+noclus = 4 # for cerebrospinal fluid, white matter, grey matter, abnormality
+woa ,pso = getclus(images, noclus)
 target = [1 for i in range(len(images))]
 
 images = [image for image in os.listdir(enhancednontumour)]
-woan ,pson = getclus(images)
+noclus = 3
+woan ,pson = getclus(images, noclus)
 targetn = [0 for i in range(len(images))]
 
-woa += woan
-pso += pson
-target += targetn
+for i in range(pson.shape[0]):
+	pso = np.append(pso, pson[i], axis = 0)
+	woa = np.append(woa, woan[i], axis = 0)
+target = np.append(target,targetn)
 
 clf_woa = SVC(kernel = "poly", degree = 2)
 clf_woa.fit(woa, target)
 
+with open('clf_woa.pkl','wb') as woaclf:
+	cPickle.dump(clf_woa, woaclf)
+
+# with open('clf_woa.pkl','rb') as woaclf:
+# 	clf_woa = cPickle.load(woaclf)
+
 clf_pso = SVC(kernel = "poly", degree = 2)
 clf_pso.fit(pso, target)
+
+with open('clf_pso.pkl','wb') as psoclf:
+	cPickle.dump(clf_pso, woaclf)
 

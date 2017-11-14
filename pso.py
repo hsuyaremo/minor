@@ -37,12 +37,11 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
     else :
         return fitness, cluselem, clussize
 
-def pso(nofeat, noclus, seval, dpoints):
+def pso(nofeat, noclus, dpoints):
     
     ''' 
         noclus = no of clusters.
         nofeat = no of features in a each cluster.
-        seval = start and end values of features for partucular cluster.
     '''
     randomcount = 0
     max_iterations = 10
@@ -63,8 +62,8 @@ def pso(nofeat, noclus, seval, dpoints):
     for i in range(noposs):
         for j in range(noclus):
             for k in range(nofeat):
-                poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
-                parvel[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
+                poss_sols[i][j][k] = np.random.randint(0,256)
+                parvel[i][j][k] = np.random.randint(0,256)
 
     for it in range(max_iterations):
         for i in range(noposs):
@@ -87,8 +86,8 @@ def pso(nofeat, noclus, seval, dpoints):
 
                 for k in range(nofeat):
                     
-                    lb = seval[j][k][0]
-                    ub = seval[j][k][1]
+                    lb = 0
+                    ub = 256
                     
                     inertial_vel = w * parvel[i][j][k] # inertia weight
                     cog_vel = r1 * c1 * (pbest[i][j][k] - poss_sols[i][j][k]) # cognitive factor

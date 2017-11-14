@@ -2,8 +2,6 @@ import numpy as np
 import math
 import sys
 
-# dpoints
-
 def fitness(sset, nofeat, noclus, dpoints, tr=1,):
     clussize = np.zeros(noclus, dtype=int)
     cluselem = np.zeros((noclus,dpoints.shape[0]), dtype=int)
@@ -40,12 +38,11 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
     else :
         return fitness, cluselem, clussize
 
-def woa(nofeat, noclus, seval ,dpoints):
+def woa(nofeat, noclus ,dpoints):
     
     ''' 
         noclus = no of clusters.
         nofeat = no of features in a each cluster.
-        seval = start and end values of features for partucular cluster.
     '''
     randomcount=0
     max_iterations = 10
@@ -57,7 +54,7 @@ def woa(nofeat, noclus, seval ,dpoints):
     for i in range(noposs):
         for j in range(noclus):
             for k in range(nofeat):
-                poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
+                poss_sols[i][j][k] = np.random.randint(0,256)
 
     global_fitness = sys.maxint
     
@@ -78,8 +75,8 @@ def woa(nofeat, noclus, seval ,dpoints):
             p = np.random.random_sample()
             for j in range(noclus):
                 for k in range(nofeat):
-                    lb = seval[j][k][0]
-                    ub = seval[j][k][1]
+                    lb = 0
+                    ub = 256
 
                     x = poss_sols[i][j][k]
                     if p < 0.5:
