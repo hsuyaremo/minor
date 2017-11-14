@@ -30,9 +30,9 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
             dpoint = dpoints[cluselem[i][j]]
             for k in range(nofeat):
                 val += (dpoint[k] - cluscenter[k]) ** 2.0
-        val = val ** 0.5
         if clussize[i] > 0:
             val /= clussize[i]
+        val = val ** 0.5
         fitness += val
     
     if tr :
@@ -49,7 +49,7 @@ def woa(nofeat, noclus, seval ,dpoints):
     '''
     randomcount=0
     max_iterations = 10
-    noposs = 5 # no. of possible solutions
+    noposs = 10 # no. of possible solutions
     poss_sols = np.zeros((noposs, noclus, nofeat)) # whale positions
     gbest = np.zeros((noclus, nofeat)) # globally best wahle postitions
     b = 2.0
@@ -59,11 +59,10 @@ def woa(nofeat, noclus, seval ,dpoints):
             for k in range(nofeat):
                 poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
 
-    global_fitness = fitness(gbest, nofeat, noclus, dpoints)
+    global_fitness = sys.maxint
     
     for i in range(noposs):
         cur_par_fitness = fitness(poss_sols[i], nofeat, noclus, dpoints)
-        print cur_par_fitness,
         if cur_par_fitness < global_fitness:
             global_fitness = cur_par_fitness
             gbest = poss_sols[i]
@@ -79,8 +78,8 @@ def woa(nofeat, noclus, seval ,dpoints):
             p = np.random.random_sample()
             for j in range(noclus):
                 for k in range(nofeat):
-                    lb = 0
-                    ub = 260
+                    lb = seval[j][k][0]
+                    ub = seval[j][k][1]
 
                     x = poss_sols[i][j][k]
                     if p < 0.5:
@@ -107,7 +106,9 @@ def woa(nofeat, noclus, seval ,dpoints):
             if fitnessi < global_fitness :
                 global_fitness = fitnessi
                 gbest = poss_sols[i]
+
+        print "iteration",it,"=",global_fitness
                 
-    print randomcount
+    print "random count =",randomcount
     fitnessi, cluselem, clussize = fitness(gbest, nofeat, noclus, dpoints, tr=0)
     return gbest, cluselem, clussize

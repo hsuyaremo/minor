@@ -27,9 +27,9 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
             dpoint = dpoints[cluselem[i][j]]
             for k in range(nofeat):
                 val += (dpoint[k] - cluscenter[k]) ** 2.0
-        val = val ** 0.5
         if clussize[i] > 0:
             val /= clussize[i]
+        val = val ** 0.5
         fitness += val
     
     if tr :
@@ -52,9 +52,9 @@ def pso(nofeat, noclus, seval, dpoints):
     pfit = np.zeros(noposs,) # each particle's best fitness value
     gbest = np.zeros((noclus, nofeat),) # globally best particle postition
     parvel = np.zeros((noposs, noclus,nofeat),) # particle velocity
-    c2 = 2 # social constant
-    c1 = 1 # cognitive constant
-    w = .4 # inertia  
+    c2 = 1.7 # social constant
+    c1 = 1.7 # cognitive constant
+    w = .9 # inertia  
     global_fitness = sys.maxint
 
     for i in range(noposs):
@@ -64,7 +64,7 @@ def pso(nofeat, noclus, seval, dpoints):
         for j in range(noclus):
             for k in range(nofeat):
                 poss_sols[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
-        print "random generated",poss_sols[i]
+                parvel[i][j][k] = np.random.randint(seval[j][k][0], high=seval[j][k][1]+1)
 
     for it in range(max_iterations):
         for i in range(noposs):
@@ -87,8 +87,8 @@ def pso(nofeat, noclus, seval, dpoints):
 
                 for k in range(nofeat):
                     
-                    lb = 0
-                    ub = 260
+                    lb = seval[j][k][0]
+                    ub = seval[j][k][1]
                     
                     inertial_vel = w * parvel[i][j][k] # inertia weight
                     cog_vel = r1 * c1 * (pbest[i][j][k] - poss_sols[i][j][k]) # cognitive factor
@@ -108,7 +108,10 @@ def pso(nofeat, noclus, seval, dpoints):
                     
                     poss_sols[i][j][k] = position #update in position
 
-    print randomcount
+        print "iteration",it,"=",global_fitness
+
+
+    print "random count=",randomcount
     
     
     fitnessi, cluselem, clussize = fitness(gbest, nofeat, noclus, dpoints, tr=0)
