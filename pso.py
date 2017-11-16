@@ -50,7 +50,7 @@ def pso(noclus, dpoints):
     parvel = np.zeros((noposs, noclus)) # particle velocity
     c2 = 1.7 # social constant
     c1 = 1.7 # cognitive constant
-    w = .5asdf # inertia  
+    w = .5 # inertia  
     global_fitness = sys.maxint
 
     for i in range(noposs):
