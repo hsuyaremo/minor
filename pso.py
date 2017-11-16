@@ -41,7 +41,7 @@ def pso(noclus, dpoints):
         noclus = no of clusters.
     '''
     randomcount = 0
-    max_iterations = 10
+    max_iterations = 30
     noposs = 5 # no. of possible solutions
     poss_sols = np.zeros((noposs, noclus),) # particles position
     pbest = np.zeros((noposs, noclus),) # each particle's best position
@@ -50,7 +50,7 @@ def pso(noclus, dpoints):
     parvel = np.zeros((noposs, noclus)) # particle velocity
     c2 = 1.7 # social constant
     c1 = 1.7 # cognitive constant
-    w = .5 # inertia  
+    w = .5asdf # inertia  
     global_fitness = sys.maxint
 
     for i in range(noposs):

@@ -56,7 +56,7 @@ def getclus(images, noclus, enhanced, imgcnt):
 				ii, jj = lst[cluselem[i][j]]
 				seg_imag[ii,jj] = setc[i]
 
-		plt.imsave(testing+str(imgcnt)+"p.jpg",seg_imag,cmap = "gray")
+		plt.imsave(enhanced+"image\\"+str(imgcnt)+"p.jpg",seg_imag,cmap = "gray")
 		features = feature.feature_extraction(seg_imag)
 		features = np.array([features])
 		if it == 0:
@@ -87,7 +87,7 @@ def getclus(images, noclus, enhanced, imgcnt):
 				ii, jj = lst[cluselem[i][j]]
 				seg_imag[ii,jj] = setc[i]
 
-		plt.imsave(testing+str(imgcnt)+"w.jpg",seg_imag,cmap ="gray")
+		plt.imsave(enhanced+"image\\"+str(imgcnt)+"w.jpg",seg_imag,cmap ="gray")
 		features = np.array([feature.feature_extraction(seg_imag)])
 		if it == 0:
 			woafeatures = features
