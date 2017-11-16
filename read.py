@@ -8,17 +8,16 @@ import WOA
 import feature
 import enhance
 import cPickle
+testing = "D:\\images\\"
 
-nofeat = 1 #no of features in each cluster
-
-def getclus(images, noclus):
+def getclus(images, noclus, enhanced, imgcnt):
 	for it,name in enumerate(images):
 		piarr = cv2.imread(enhanced + name ,0)
 		mask ,piarr = enhance.skstr(piarr)
 		
 		r = piarr.shape[0]
 		ground = [27.5,72.5,110,142.5]
-		col = [63,127,191,255]
+		col = [100,150,200,255]
 
 		lst = []
 		for i in range(r):
@@ -26,13 +25,14 @@ def getclus(images, noclus):
 				if mask[i][j] == 255:
 					lst.append((i,j))
 
-		masked_image = np.zeros((len(lst),nofeat))
+		masked_image = np.zeros((len(lst)),dtype=np.uint8)
+
 		for ii in range(len(lst)):
 			i, j = lst[ii]
-			masked_image[ii] = piarr[i*r +j]
+			masked_image[ii] = piarr[i][j]
 
 		print "clustering..with pso"
-		gbest, cluselem , clussize = pso.pso(nofeat,noclus,masked_image)
+		gbest, cluselem , clussize = pso.pso(noclus, masked_image)
 		print "done with clustering."
 
 		print "data points are:"
@@ -41,6 +41,7 @@ def getclus(images, noclus):
 		print "global best \n",gbest
 
 		setc = [0,0,0,0]
+
 		for i in range(noclus):
 			val = 256
 			for j in range(noclus):
@@ -55,15 +56,16 @@ def getclus(images, noclus):
 				ii, jj = lst[cluselem[i][j]]
 				seg_imag[ii,jj] = setc[i]
 
-		plt.imsave(testing+str(it)+"p.jpg",seg_imag,cmap = "gray")
+		plt.imsave(testing+str(imgcnt)+"p.jpg",seg_imag,cmap = "gray")
 		features = feature.feature_extraction(seg_imag)
+		features = np.array([features])
 		if it == 0:
 			psofeatures = features
 		else:
 			psofeatures = np.append(psofeatures, features, axis =0 )
 
 		print "clustering..with woa"
-		gbest, cluselem , clussize = WOA.woa(nofeat,noclus,seval,masked_image)
+		gbest, cluselem , clussize = WOA.woa(noclus, masked_image)
 		print "done with clustering."
 
 		print "data points are:"
@@ -85,38 +87,60 @@ def getclus(images, noclus):
 				ii, jj = lst[cluselem[i][j]]
 				seg_imag[ii,jj] = setc[i]
 
-		plt.imsave(testing+str(it)+"w.jpg",seg_imag,cmap ="gray")
-		features = feature.feature_extraction(seg_imag)
+		plt.imsave(testing+str(imgcnt)+"w.jpg",seg_imag,cmap ="gray")
+		features = np.array([feature.feature_extraction(seg_imag)])
 		if it == 0:
 			woafeatures = features
 		else :
 			woafeatures = np.append(woafeatures, features, axis =0 )
-
+		imgcnt += 1
 	return woafeatures,psofeatures
 
-enhancedtumour = "D:\\enhanced\\"
-enhancednontumour = "D:\\images\\"
+enhancedtumour = "D:\\enhancedtumour\\"
+enhancednontumour = "D:\\enhancednontumour\\"
 
-#enhance.enhtumour()
-#enhance.enhnontumour()
-
-images = [image for image in os.listdir(enhancedtumour)]
+enhance.enhtumour()
+enhance.enhnontumour()
+imgcnt = 1
+filew = open("featwoa.txt","a")
+filep = open("featpso.txt","a")
+filet = open("target.txt","a")
+images1 = [image for image in os.listdir(enhancedtumour)]
 noclus = 4 # for cerebrospinal fluid, white matter, grey matter, abnormality
-woa ,pso = getclus(images, noclus)
-target = [1 for i in range(len(images))]
+woat ,psot = getclus(images1, noclus, enhancedtumour, imgcnt)
+target = np.array([1 for i in range(len(images1))])
 
-images = [image for image in os.listdir(enhancednontumour)]
+images2 = [image for image in os.listdir(enhancednontumour)]
 noclus = 3
-woan ,pson = getclus(images, noclus)
-targetn = [0 for i in range(len(images))]
+imgcnt = len(images1) + 1
+woant ,psont = getclus(images2, noclus, enhancednontumour, imgcnt)
+targetn = np.array([0 for i in range(len(images2))])
+print psont.shape,psot.shape
 
-for i in range(pson.shape[0]):
-	pso = np.append(pso, pson[i], axis = 0)
-	woa = np.append(woa, woan[i], axis = 0)
+featpso = np.zeros((len(images1)+len(images2),13))
+featwoa = np.zeros((len(images1)+len(images2),13))
+for i in range(psot.shape[0]):
+	for j in range(13):
+		featpso[i][j] = psot[i][j]
+		featwoa[i][j] = woat[i][j]
+
+for i in range(psont.shape[0]):
+	for j in range(13):
+		featpso[i+len(images1)][j] = psont[i][j]
+		featwoa[i+len(images1)][j] = woant[i][j]
+
 target = np.append(target,targetn)
 
+for i in range(featwoa.shape[0]):
+	for j in range(13):
+		filew.write(str(featwoa[i][j]) +'\n')
+		filep.write(str(featpso[i][j]) +'\n')
+	filet.write(str(target[i])+'\n')
+filew.close()
+filep.close()
+filet.close()
 clf_woa = SVC(kernel = "poly", degree = 2)
-clf_woa.fit(woa, target)
+clf_woa.fit(featwoa, target)
 
 with open('clf_woa.pkl','wb') as woaclf:
 	cPickle.dump(clf_woa, woaclf)
@@ -125,8 +149,10 @@ with open('clf_woa.pkl','wb') as woaclf:
 # 	clf_woa = cPickle.load(woaclf)
 
 clf_pso = SVC(kernel = "poly", degree = 2)
-clf_pso.fit(pso, target)
+clf_pso.fit(featpso, target)
 
 with open('clf_pso.pkl','wb') as psoclf:
-	cPickle.dump(clf_pso, woaclf)
+	cPickle.dump(clf_pso, psoclf)
+
+
 

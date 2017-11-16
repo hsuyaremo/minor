@@ -100,39 +100,41 @@ def skstr(img):
 	im_floodfill_inv = cv2.bitwise_not(im_floodfill)
  	im_out = im_th | im_floodfill_inv
 
- 	return im_out,mf,ls
+ 	return im_out,mf
 
-def enhance_image(image, name, imgcnt):
+def enhance_image(image, name, imgcnt, folder):
 	name = name[:-4]
-	plt.imsave(enhanced + str(imgcnt) + ".jpg", image, cmap = "gray")
-	image = cv2.imread(enhanced + str(imgcnt) + ".jpg" , 0)
+	plt.imsave(folder + str(imgcnt) + ".jpg", image, cmap = "gray")
+	image = cv2.imread(folder + str(imgcnt) + ".jpg" , 0)
 	image = cv2.resize(image , (512,512))
 	nonoise = cv2.fastNlMeansDenoising(image,10,10,7,21) #noise removal
 	clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8)) 	#histogram equalisation
 	image = clahe.apply(nonoise)
-	plt.imsave(enhanced + str(imgcnt) + ".jpg", image, cmap = "gray")
+	plt.imsave(folder + str(imgcnt) + ".jpg", image, cmap = "gray")
 
 def enhtumour():
 	imgcnt = 0
 	training_data = "D:\\trainingtumourdata\\"
+	folder = "D:\\enhancedtumour\\"
 	for root, dr, files in os.walk(training_data):
 		for name in files:
 			print "Enhancing....\n",name
 			img = dicom.read_file(os.path.join(root,name))
 			piarr = img.pixel_array
-			enhance_image(piarr, name ,imgcnt)
+			enhance_image(piarr, name ,imgcnt, folder)
 			imgcnt += 1
 			print "saved.",imgcnt
 
 def enhnontumour():
 	imgcnt = 0
 	training_data = "D:\\trainingnontumourdata\\"
+	folder = "D:\\enhancednontumour\\"
 	for root, dr, files in os.walk(training_data):
 		for name in files:
 			print "Enhancing....\n",name
 			img = dicom.read_file(os.path.join(root,name))
 			piarr = img.pixel_array
-			enhance_image(piarr, name ,imgcnt)
+			enhance_image(piarr, name ,imgcnt, folder)
 			imgcnt += 1
 			print "saved.",imgcnt
 

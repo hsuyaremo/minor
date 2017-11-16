@@ -39,8 +39,9 @@ def feature_extraction(image):
 			features[5] += hist[i] * np.log2(hist[i])  	
  	
  	var = features[1]
- 	features[2] *= var**(-1.5)
- 	features[3] *= var**(-2.0) - 3
+ 	if var !=0:
+ 		features[2] *= var**(-1.5)
+ 		features[3] *= var**(-2.0) - 3
  	features[5] *= -1
 
 	b = np.zeros((d,d)) 
@@ -74,14 +75,15 @@ def feature_extraction(image):
 	for i in range(d):
 		for j in range(d):
 			features[6] += b[i][j]**2.0
-			features[7] += (i*j*b[i][j] - ux[i]*u[j])/(sdx[i]*sdx[j])
+			if sdx[i]*sdx[j] != 0:
+				features[7] += (i*j*b[i][j] - ux[i]*uy[j])/(sdx[i]*sdx[j])
 			features[8] += (i-j)**2.0 * b[i][j]
 			features[9] += abs(i-j) * b[i][j]
 			features[10] += b[i][j]/(1 + (i-j)**2.0)
 			if b[i][j] != 0:
 				features[11] += b[i][j] * np.log2(b[i][j])
 	features[11] *= -1
-	features[12] = max(b)
+	features[12] = max(b.flatten())
 
 	return features
 

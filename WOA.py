@@ -2,7 +2,9 @@ import numpy as np
 import math
 import sys
 
-def fitness(sset, nofeat, noclus, dpoints, tr=1,):
+ground = [[20,40],[60,80],[100,120],[140,170]]
+
+def fitness(sset, noclus, dpoints, tr=1,):
     clussize = np.zeros(noclus, dtype=int)
     cluselem = np.zeros((noclus,dpoints.shape[0]), dtype=int)
 
@@ -10,9 +12,7 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
         minval = sys.maxint
         clusindex = -1
         for j in range(noclus):
-            val = 0.0
-            for k in range(nofeat):
-                val += (dpoints[i][k] - sset[j][k]) ** 2.0
+            val = abs(dpoints[i] - sset[j])
             if val < minval :
                 minval = val
                 clusindex = j
@@ -26,11 +26,9 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
         val = 0.0
         for j in range(clussize[i]):
             dpoint = dpoints[cluselem[i][j]]
-            for k in range(nofeat):
-                val += (dpoint[k] - cluscenter[k]) ** 2.0
+            val += abs(dpoint - cluscenter) 
         if clussize[i] > 0:
             val /= clussize[i]
-        val = val ** 0.5
         fitness += val
     
     if tr :
@@ -38,28 +36,26 @@ def fitness(sset, nofeat, noclus, dpoints, tr=1,):
     else :
         return fitness, cluselem, clussize
 
-def woa(nofeat, noclus ,dpoints):
+def woa(noclus ,dpoints):
     
     ''' 
         noclus = no of clusters.
-        nofeat = no of features in a each cluster.
     '''
     randomcount=0
     max_iterations = 10
-    noposs = 10 # no. of possible solutions
-    poss_sols = np.zeros((noposs, noclus, nofeat)) # whale positions
-    gbest = np.zeros((noclus, nofeat)) # globally best wahle postitions
-    b = 2.0
+    noposs = 5 # no. of possible solutions
+    poss_sols = np.zeros((noposs, noclus)) # whale positions
+    gbest = np.zeros((noclus,)) # globally best wahle postitions
+    b = 1.7
 
     for i in range(noposs):
         for j in range(noclus):
-            for k in range(nofeat):
-                poss_sols[i][j][k] = np.random.randint(0,256)
+            poss_sols[i][j] = np.random.randint(ground[j][0],ground[j][1])
 
     global_fitness = sys.maxint
     
     for i in range(noposs):
-        cur_par_fitness = fitness(poss_sols[i], nofeat, noclus, dpoints)
+        cur_par_fitness = fitness(poss_sols[i], noclus, dpoints)
         if cur_par_fitness < global_fitness:
             global_fitness = cur_par_fitness
             gbest = poss_sols[i]
@@ -74,32 +70,31 @@ def woa(nofeat, noclus ,dpoints):
             l = 2.0 * np.random.random_sample() - 1.0
             p = np.random.random_sample()
             for j in range(noclus):
-                for k in range(nofeat):
-                    lb = 0
-                    ub = 256
+                lb = 0
+                ub = 256
 
-                    x = poss_sols[i][j][k]
-                    if p < 0.5:
-                        if abs(A) < 1:
-                            _x = gbest[j][k]
-                        else :
-                            rand = np.random.randint(noposs)
-                            _x = poss_sols[rand][j][k]
-
-                        D = abs(C*_x - x)
-                        updatedx = _x - A*D
+                x = poss_sols[i][j]
+                if p < 0.5:
+                    if abs(A) < 1:
+                        _x = gbest[j]
                     else :
-                        _x = gbest[j][k]
-                        D = abs(_x - x)
-                        updatedx = D * math.exp(b*l) * math.cos(2.0* math.acos(-1.0) * l) + _x
+                        rand = np.random.randint(noposs)
+                        _x = poss_sols[rand][j]
 
-                    if updatedx > ub or updatedx < lb:
-                        updatedx = np.random.randint(lb, high = ub+1)
-                        randomcount += 1
+                    D = abs(C*_x - x)
+                    updatedx = _x - A*D
+                else :
+                    _x = gbest[j]
+                    D = abs(_x - x)
+                    updatedx = D * math.exp(b*l) * math.cos(2.0* math.acos(-1.0) * l) + _x
 
-                    poss_sols[i][j][k] = updatedx
+                if updatedx < lb or updatedx > ub:
+                    updatedx = np.random.randint(lb, high = ub+1)
+                    randomcount += 1
 
-            fitnessi = fitness(poss_sols[i], nofeat, noclus, dpoints)
+                poss_sols[i][j] = updatedx
+
+            fitnessi = fitness(poss_sols[i], noclus, dpoints)
             if fitnessi < global_fitness :
                 global_fitness = fitnessi
                 gbest = poss_sols[i]
@@ -107,5 +102,5 @@ def woa(nofeat, noclus ,dpoints):
         print "iteration",it,"=",global_fitness
                 
     print "random count =",randomcount
-    fitnessi, cluselem, clussize = fitness(gbest, nofeat, noclus, dpoints, tr=0)
+    fitnessi, cluselem, clussize = fitness(gbest, noclus, dpoints, tr=0)
     return gbest, cluselem, clussize
