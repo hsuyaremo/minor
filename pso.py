@@ -96,7 +96,7 @@ def pso(noclus, dpoints):
                 parvel[i][j] = vel
                 position = poss_sols[i][j] + vel 
 
-                if position < lb or position < ub :
+                if position < lb or position > ub :
                     position = np.random.randint(lb,high = ub+1)
                     randomcount += 1
                 

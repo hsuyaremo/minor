@@ -99,12 +99,12 @@ def getclus(images, noclus, enhanced, imgcnt):
 enhancedtumour = "D:\\enhancedtumour\\"
 enhancednontumour = "D:\\enhancednontumour\\"
 
-enhance.enhtumour()
-enhance.enhnontumour()
+# enhance.enhtumour()
+# enhance.enhnontumour()
 imgcnt = 1
-filew = open("featwoa.txt","a")
-filep = open("featpso.txt","a")
-filet = open("target.txt","a")
+filew = open("featwoa.txt","w")
+filep = open("featpso.txt","w")
+filet = open("target.txt","w")
 images1 = [image for image in os.listdir(enhancedtumour)]
 noclus = 4 # for cerebrospinal fluid, white matter, grey matter, abnormality
 woat ,psot = getclus(images1, noclus, enhancedtumour, imgcnt)
