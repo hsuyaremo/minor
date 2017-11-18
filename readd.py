@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 import numpy as np
-import cv2
-import os
-import pso
-import WOA
-import feature
-import enhance
+# import cv2
+# import os
+# import pso
+# import WOA
+# import feature
+# import enhance
 import cPickle
 testing = "D:\\images\\"
-
+'''
 def getclus(images, noclus, enhanced, imgcnt):
 	for it,name in enumerate(images):
 		piarr = cv2.imread(enhanced + name ,0)
@@ -98,61 +98,53 @@ def getclus(images, noclus, enhanced, imgcnt):
 
 enhancedtumour = "D:\\enhancedtumour\\"
 enhancednontumour = "D:\\enhancednontumour\\"
-
+'''
 # enhance.enhtumour()
 # enhance.enhnontumour()
 imgcnt = 1
-filew = open("featwoa.txt","w")
-filep = open("featpso.txt","w")
-filet = open("target.txt","w")
-images1 = [image for image in os.listdir(enhancedtumour)]
-noclus = 4 # for cerebrospinal fluid, white matter, grey matter, abnormality
-woat ,psot = getclus(images1, noclus, enhancedtumour, imgcnt)
-target = np.array([1 for i in range(len(images1))])
+filep = open("featpso.txt","r")
+filew = open("featwoa.txt","r")
+filet = open("target.txt","r")
+d = 311
+featpso = np.zeros((d,13))
+featwoa = np.zeros((d,13))
+target = np.zeros((d),dtype = int)
 
-images2 = [image for image in os.listdir(enhancednontumour)]
-noclus = 3
-imgcnt = len(images1) + 1
-woant ,psont = getclus(images2, noclus, enhancednontumour, imgcnt)
-targetn = np.array([0 for i in range(len(images2))])
-print psont.shape,psot.shape
 
-featpso = np.zeros((len(images1)+len(images2),13))
-featwoa = np.zeros((len(images1)+len(images2),13))
-for i in range(psot.shape[0]):
-	for j in range(13):
-		featpso[i][j] = psot[i][j]
-		featwoa[i][j] = woat[i][j]
-
-for i in range(psont.shape[0]):
-	for j in range(13):
-		featpso[i+len(images1)][j] = psont[i][j]
-		featwoa[i+len(images1)][j] = woant[i][j]
-
-target = np.append(target,targetn)
+fp = filep.readlines()
+fw = filew.readlines()
+tar = filet.readlines()
 
 for i in range(featwoa.shape[0]):
 	for j in range(13):
-		filew.write(str(featwoa[i][j]) +'\n')
-		filep.write(str(featpso[i][j]) +'\n')
-	filet.write(str(target[i])+'\n')
-filew.close()
+		featpso[i][j] = fp[i*13+j]
+		featwoa[i][j] = fw[i*13+j]
+	target[i] = int(tar[i])
+
 filep.close()
+filew.close()
 filet.close()
-clf_woa = SVC(kernel = "poly", degree = 2)
+
+print featpso,target
+print "training woa..."
+clf_woa = SVC(kernel = "poly", degree = 1)
 clf_woa.fit(featwoa, target)
+print "done"
 
 with open('clf_woa.pkl','wb') as woaclf:
 	cPickle.dump(clf_woa, woaclf)
-
+print "saved"
 # with open('clf_woa.pkl','rb') as woaclf:
 # 	clf_woa = cPickle.load(woaclf)
 
-clf_pso = SVC(kernel = "poly", degree = 2)
+print "training pso..."
+clf_pso = SVC(kernel = "poly", degree = 1)
 clf_pso.fit(featpso, target)
-
+print "done"
 with open('clf_pso.pkl','wb') as psoclf:
 	cPickle.dump(clf_pso, psoclf)
+
+print "saved"
 
 
 

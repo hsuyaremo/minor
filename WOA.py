@@ -43,10 +43,10 @@ def woa(noclus ,dpoints):
     '''
     randomcount=0
     max_iterations = 30
-    noposs = 5 # no. of possible solutions
+    noposs = 10 # no. of possible solutions
     poss_sols = np.zeros((noposs, noclus)) # whale positions
-    gbest = np.zeros((noclus,)) # globally best wahle postitions
-    b = 1.7
+    gbest = np.zeros((noclus,)) # globally best whale postitions
+    b = 2.0
 
     for i in range(noposs):
         for j in range(noclus):

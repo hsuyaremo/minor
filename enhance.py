@@ -11,7 +11,7 @@ def valid(x, y, rs, cs, thresh):
 
 def skstr(img):
 
-	mf = cv2.medianBlur(img, ksize = 5)
+	mf = cv2.medianBlur(img, ksize = 3)
 	rows, cols = img.shape
 	ti = np.mean(mf)
 
@@ -49,7 +49,7 @@ def skstr(img):
 	tf = np.mean(roi)
 	ls = [l,r,u,d]
 
-	t,thresh = cv2.threshold(mf,(ti+tf)/2.0,255,0)
+	t,thresh = cv2.threshold(mf,(tf+ti)/2.0,255,0)
 
 	kernel = np.ones((13,13),dtype = np.uint8)
 	opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
